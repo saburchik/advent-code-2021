@@ -1000,41 +1000,60 @@ let nums = `
 000010010011
 100111101100`.split('\n')
 
-let hits = []
-let oxygenReting
-let co2Rating
-
-function recordHit(pos, res) {
-    if (!hits[pos]) {
-        hits[pos] = { zeroes: 0, ones: 0 }
+function calculateGammaAndEpsilon(arr, kind) {
+    let hits = []
+    function recordHit(pos, res) {
+        if (!hits[pos]) {
+            hits[pos] = { zeroes: 0, ones: 0 }
+        }
+        let hit = hits[pos]
+        if (res === '0') {
+            hit.zeroes++
+        } else if (res === '1') {
+            hit.ones++
+        } else throw Error('Oh..noo')
     }
-    let hit = hits[pos]
-    if (res === '0') {
-        hit.zeroes++
-    } else if (res === '1') {
-        hit.ones++
-    } else throw Error('Oh..no')
+    for (let num of arr) {
+        for (let i = 0; i < num.length; i++) {
+            recordHit(i, num[i])
+        }
+    }
+    let gamma = ''
+    let epsilon = ''
+    for (let hit of hits) {
+        if (hit.ones > hit.zeroes) {
+            gamma += '1'
+            epsilon += '0'
+        } else if (hit.zeroes > hit.ones) {
+            gamma += '0'
+            epsilon += '1'
+        } else {
+            gamma += '1'
+            epsilon += '0'
+        }
+    }
+    return [gamma, epsilon]
 }
 
-for (let num of nums) {
-    for (let i = 0; i < num.length; i++) {
-        recordHit(i, num[i])
+function findRating(arr, kind, pos = 0) {
+    let [gamma, epsilon] = calculateGammaAndEpsilon(arr, kind)
+    let expectedVal = kind === 'o' ? gamma[pos] : epsilon[pos];
+    let filtered = arr.filter(num =>
+        num[pos] === expectedVal
+    )
+    if (filtered.length === 1) {
+        return filtered[0]
+    } else if (filtered.length === 0) {
+        throw Error('Oh..no')
+    } else {
+        return findRating(filtered, kind, pos + 1)
     }
 }
 
-let gamma = ''
-let epsilon = ''
-for (let hit of hits) {
-    if (hit.ones > hit.zeroes) {
-        gamma += 1
-        epsilon += 0
-    } else if (hit.zeroes > hit.ones) {
-        gamma += 0
-        epsilon += 1
-    } else throw Error('Oh..no')
-}
+let oxygenRating = findRating(nums, 'o')
+let scrubberRating = findRating(nums, 'c')
 
 alert(
-    parseInt(gamma, 2) *
-    parseInt(epsilon, 2)
+    parseInt(oxygenRating, 2) *
+    parseInt(scrubberRating, 2)
 )
