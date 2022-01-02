@@ -659,7 +659,9 @@ function calculateScore(board, dir) {
 }
 
 let lastCall
+let lastScore
 let marked = new Set()
+let wonBoards = new Set()
 
 for (let call of calls) {
     lastCall = call
@@ -669,9 +671,9 @@ for (let call of calls) {
             for (let num of row.numbers) {
                 if (call === num) {
                     row.progress++
-                    if (row.progress === 5) {
-                        alert(calculateScore(board, 'r'))
-                        throw Error('NOOO')
+                    if (row.progress === 5 && !wonBoards.has(board)) {
+                        lastScore = calculateScore(board, 'r')
+                        wonBoards.add(board)
                     }
                 }
             }
@@ -680,12 +682,14 @@ for (let call of calls) {
             for (let num of col.numbers) {
                 if (call === num) {
                     col.progress++
-                    if (col.progress === 5) {
-                        alert(calculateScore(board, 'c'))
-                        throw Error('we done here')
+                    if (col.progress === 5 && !wonBoards.has(board)) {
+                        lastScore = calculateScore(board, 'c')
+                        wonBoards.add(board)
                     }
                 }
             }
         }
     }
 }
+
+alert(lastScore)
