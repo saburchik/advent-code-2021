@@ -501,16 +501,16 @@ let rawInput = `822,976 -> 822,117
 
 // rawInput = `0,10 -> 0,11`
 
-rawInput = `0,9 -> 5,9
-8,0 -> 0,8
-9,4 -> 3,4
-2,2 -> 2,1
-7,0 -> 7,4
-6,4 -> 2,0
-0,9 -> 2,9
-3,4 -> 1,4
-0,0 -> 8,8
-5,5 -> 8,2`
+// rawInput = `0,9 -> 5,9
+// 8,0 -> 0,8
+// 9,4 -> 3,4
+// 2,2 -> 2,1
+// 7,0 -> 7,4
+// 6,4 -> 2,0
+// 0,9 -> 2,9
+// 3,4 -> 1,4
+// 0,0 -> 8,8
+// 5,5 -> 8,2`
 
 let vectors = rawInput
     .split('\n')
@@ -523,25 +523,31 @@ let vectors = rawInput
         from: { x: from[0], y: from[1] },
         to: { x: to[0], y: to[1] },
     }))
-    .filter(vec =>
-        vec.from.x === vec.to.x ||
-        vec.from.y === vec.to.y
-    );
+// .filter(vec =>
+//     vec.from.x === vec.to.x ||
+//     vec.from.y === vec.to.y
+// );
 
 function* walk(vec) {
     if (vec.from.x === vec.to.x) {
         let step = vec.from.y < vec.to.y ? 1 : -1
-        let isDone = step === 1 ? y <= vec.to.y : y >= vec.to.y;
-        for (let y = vec.from.y; isDone; y += step) {
+        for (let y = vec.from.y; step === 1 ? y <= vec.to.y : y >= vec.to.y; y += step) {
             yield { x: vec.from.x, y }
         }
     } else if (vec.from.y === vec.to.y) {
         let step = vec.from.x < vec.to.x ? 1 : -1
-        let isDone = step === 1 ? x <= vec.to.x : x >= vec.to.x;
-        for (let x = vec.from.x; isDone; x += step) {
+        for (let x = vec.from.x; step === 1 ? x <= vec.to.x : x >= vec.to.x; x += step) {
             yield { x, y: vec.from.y }
         }
-    } else throw Error('Oh..noo')
+    } else {
+        let yStep = vec.from.y < vec.to.y ? 1 : -1
+        let xStep = vec.from.x < vec.to.x ? 1 : -1
+        let x = vec.from.x
+        let y = vec.from.y
+        for (; xStep === 1 ? x <= vec.to.x : x >= vec.to.x; x += xStep, y += yStep) {
+            yield { x, y }
+        }
+    }
 }
 
 let width = 0
@@ -590,3 +596,5 @@ for (let [key, val] of hits) {
         score++
     }
 }
+
+alert(score)
