@@ -15,14 +15,14 @@ cause there is not enough info.
 count => number
 
 0: 6
-1: 2
+    1: 2
 2: 5
 3: 5
-4: 4
+    4: 4
 5: 5
 6: 6
-7: 3
-8: 7
+    7: 3
+    8: 7
 9: 6
 
 
@@ -242,19 +242,88 @@ let notes = rawInput
         output: output.split(' ')
     }))
 
-let count = 0
+function inferMappings(patterns) {
+    let segmentMap = new Map()
 
-for (let { patterns, output } of notes) {
-    for (let digit of output) {
-        if (
-            digit.length === 2 ||
-            digit.length === 3 ||
-            digit.length === 4 ||
-            digit.length === 7
-        ) {
-            count++
+    function recordPattern(n, pattern) {
+        let orig = encodeNumber(n)
+        for (let i = 0; i < orig.length; i++) {
+            segmentMap.set(orig[i], pattern[i])
         }
+        // segmentMap.set('c', pattern[0])
+        // segmentMap.set('f', pattern[1])
+    }
+    for (let pattern of patterns) {
+        if (pattern.length === 7) {
+            recordPattern(8, pattern)
+        }
+    }
+    return segmentMap
+}
+
+
+let mapping = inferMappings(
+    `acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab`
+        .split(' ')
+)
+let output = 'cdfeb fcadb cdfeb cdbaf'.split(' ')
+let result = output.map(s => applyMappings(s, mapping))
+
+function applyMappings(segments, mapping) {
+    segments = toCanonical(segments)
+    let newSegments = ''
+    for (let i = 0; i < segments.length; i++) {
+        newSegments += mapping.get(segments[i])
+    }
+    return newSegments
+}
+
+function encodeNumber(n) {
+    switch (n) {
+        case 0: return 'abcfg'
+        case 1: return 'cf'
+        case 2: return 'acdeg'
+        case 3: return 'acdfg'
+        case 4: return 'bcdf'
+        case 5: return 'abdfg'
+        case 6: return 'abdefg'
+        case 7: return 'acf'
+        case 8: return 'abcdefg'
+        case 9: return 'abcdfg'
+        default: throw Error('oh..noo')
     }
 }
 
-console.log(count);
+function decodeNumber(segments) {
+    switch (toCanonical(segments)) {
+        case 'abcfg': return 0
+        case 'cf': return 1
+        case 'acdeg': return 2
+        case 'acdfg': return 3
+        case 'bcdf': return 4
+        case 'abdfg': return 5
+        case 'abdefg': return 6
+        case 'acf': return 7
+        case 'abcdefg': return 8
+        case 'abcdfg': return 9
+        default: throw Error('oh..noo')
+    }
+}
+
+function toCanonical(segments) {
+    let chars = segments.split('')
+    chars.sort()
+    return chars.join('')
+}
+
+// let sum = 0
+// for (let { patterns, output } of notes) {
+//     let mapping = guessMappings(patterns)
+//     let decode = output
+//         .map(digit => applyMappings(digit, mapping))
+//         .map(decodeNumber)
+//         .join('')
+//     sum += decode
+// }
+
+console.log(sum);
