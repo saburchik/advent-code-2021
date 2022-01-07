@@ -1,37 +1,3 @@
-/*
-- we have 4-number displays
-- input: some 4-digit number
-- we are trying to display numbers (e.g. 1st number 
-is af, second is acd, etc) but segments are connected
-randomly within each 4-digit display. For example 'a' becomes
-'c', 'c' becomes 'd', and so on.
-- the mapping is the same within each 4 digit display.
-- input: 'b and g are on'
-- I can infer: {bc} -> {cf} cause cf is a valid combo.
-- but I cannot infer b->c / g->f or b->f c->g yet
-cause there is not enough info.
-
-
-count => number
-
-0: 6
-    1: 2
-2: 5
-3: 5
-    4: 4
-5: 5
-6: 6
-    7: 3
-    8: 7
-9: 6
-
-
-2 chars -> 1
-3 chars -> 7
-4 chars -> 4
-7 chars -> 8
-*/
-
 let rawInput = `gfeabcd adecfb gcedb cef efgdc decabg cbfg edfga fdegcb cf | fc faedg fdage fec
 bcfegd fdceg ecgfadb fdae af cdeagf afc abdgc gcadf gfbace | cefdbg afgedc bcagd gedcf
 gbf bagdec fgdbae cfbd bgacd fb fbcaegd dfgbac gbfca gecaf | gadcfb abgcf bdcgea gbf
@@ -242,11 +208,10 @@ let notes = rawInput
         output: output.split(' ')
     }))
 
-let SEGMENTS = ['a', 'b', 'c', 'd', 'e', 'f', 'g ']
+let SEGMENTS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
 
 function inferMapping(patterns) {
     let candidateMap = new Map()
-    let segmentMap = new Map()
 
     for (let i of SEGMENTS) {
         let candidates = []
@@ -256,14 +221,12 @@ function inferMapping(patterns) {
         }
     }
 
-    // 'a', 'cf'
     function narrowPossibilities(seg, possibilities) {
         let candidates = candidateMap.get(seg)
         let nextCandidates = candidates
             .filter(c => possibilities.includes(c))
         candidateMap.set(seg, nextCandidates)
     }
-    // 'd', 'cf'
     function excludePossibilities(seg, possibilities) {
         let candidates = candidateMap.get(seg)
         let nextCandidates = candidates
@@ -271,15 +234,8 @@ function inferMapping(patterns) {
         candidateMap.set(seg, nextCandidates)
     }
 
-    // recordKnown('ab', 1)
     function recordKnown(pattern, n) {
-        let encoded = encodeNumber(n) // 'cf'
-        // pick a
-        //      - mark it could be c or f;
-        // pick b.
-        //      - mark it could be c or f;
-        // for every other seg.
-        //      - mark it could NOT be c or f;    
+        let encoded = encodeNumber(n)
         for (let seg of SEGMENTS) {
             if (pattern.includes(seg)) {
                 narrowPossibilities(seg, encoded.split(''))
@@ -301,7 +257,7 @@ function inferMapping(patterns) {
         }
     }
 
-    function exclodeCandidates(pattern) {
+    function explodeCandidates(pattern) {
         let set = new Set()
         let candidatesInOrder =
             pattern.split('')
@@ -309,19 +265,28 @@ function inferMapping(patterns) {
         return explode(candidatesInOrder)
     }
 
-    for (let pattern of patterns) {
-        console.group(pattern);
-        let originalCandidates = [...exclodeCandidates(pattern)]
-        console.log('exploded', originalCandidates);
-        console.groupEnd(pattern);
-        // let filteredCandidates = originalCandidates.filter(isValidCandidate)
-        // if (filteredCandidates.length === 1) {
-        //     console.log('tada', pattern, filteredCandidates[0]);
-        // }
+    function isValidCandidate(candidate) {
+        if (new Set(candidate.split('')).size !== candidate.length) {
+            return false
+        }
+        if (decodeNumber(candidate) !== null) {
+            return true
+        }
+        return false
     }
 
-    // console.log(candidateMap);
-    return segmentMap
+    let patternMap = new Map()
+    for (let pattern of patterns) {
+        pattern = toCanonical(pattern)
+        let originalCandidates = [...explodeCandidates(pattern)]
+        let filteredCandidates = originalCandidates.map(toCanonical)
+        filteredCandidates = [...new Set(filteredCandidates)]
+        filteredCandidates = filteredCandidates.filter(isValidCandidate)
+        if (filteredCandidates.length === 1) {
+            patternMap.set(pattern, filteredCandidates[0])
+        } else throw Error('oh...no')
+    }
+    return patternMap
 }
 
 function* explode(arrs) {
@@ -337,29 +302,9 @@ function* explode(arrs) {
     }
 }
 
-let mapping = inferMapping(
-    `acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab`
-        .split(' ')
-)
-// console.log(mapping);
-// console.log(encodeNumber(5));
-// let output = 'cdfeb fcadb cdfeb cdbaf'.split(' ')
-// let result = output
-//     .map(s => applyMappings(s, mapping))
-// console.log(result);
-
-function applyMappings(segments, mapping) {
-    segments = toCanonical(segments)
-    let newSegments = ''
-    for (let i = 0; i < segments.length; i++) {
-        newSegments += mapping.get(segments[i])
-    }
-    return newSegments
-}
-
 function encodeNumber(n) {
     switch (n) {
-        case 0: return 'abcfg'
+        case 0: return 'abcefg'
         case 1: return 'cf'
         case 2: return 'acdeg'
         case 3: return 'acdfg'
@@ -375,7 +320,7 @@ function encodeNumber(n) {
 
 function decodeNumber(segments) {
     switch (toCanonical(segments)) {
-        case 'abcfg': return 0
+        case 'abcefg': return 0
         case 'cf': return 1
         case 'acdeg': return 2
         case 'acdfg': return 3
@@ -385,7 +330,7 @@ function decodeNumber(segments) {
         case 'acf': return 7
         case 'abcdefg': return 8
         case 'abcdfg': return 9
-        default: throw Error('oh..noo')
+        default: return null
     }
 }
 
@@ -395,14 +340,15 @@ function toCanonical(segments) {
     return chars.join('')
 }
 
-// let sum = 0
-// for (let { patterns, output } of notes) {
-//     let mapping = inferMapping(patterns)
-//     let decode = output
-//         .map(digit => applyMappings(digit, mapping))
-//         .map(decodeNumber)
-//         .join('')
-//     sum += decode
-// }
+let sum = 0
+for (let { patterns, output } of notes) {
+    let mapping = inferMapping(patterns)
+    let decode = output
+        .map(toCanonical)
+        .map(digit => mapping.get(digit))
+        .map(decodeNumber)
+        .join('')
+    sum += Number(decode)
+}
 
-// alert(sum);
+console.log(sum);
