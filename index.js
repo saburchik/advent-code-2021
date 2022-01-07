@@ -242,32 +242,111 @@ let notes = rawInput
         output: output.split(' ')
     }))
 
-function inferMappings(patterns) {
+let SEGMENTS = ['a', 'b', 'c', 'd', 'e', 'f', 'g ']
+
+function inferMapping(patterns) {
+    let candidateMap = new Map()
     let segmentMap = new Map()
 
-    function recordPattern(n, pattern) {
-        let orig = encodeNumber(n)
-        for (let i = 0; i < orig.length; i++) {
-            segmentMap.set(orig[i], pattern[i])
+    for (let i of SEGMENTS) {
+        let candidates = []
+        candidateMap.set(i, candidates)
+        for (let j of SEGMENTS) {
+            candidates.push(j)
         }
-        // segmentMap.set('c', pattern[0])
-        // segmentMap.set('f', pattern[1])
     }
+
+    // 'a', 'cf'
+    function narrowPossibilities(seg, possibilities) {
+        let candidates = candidateMap.get(seg)
+        let nextCandidates = candidates
+            .filter(c => possibilities.includes(c))
+        candidateMap.set(seg, nextCandidates)
+    }
+    // 'd', 'cf'
+    function excludePossibilities(seg, possibilities) {
+        let candidates = candidateMap.get(seg)
+        let nextCandidates = candidates
+            .filter(c => !possibilities.includes(c))
+        candidateMap.set(seg, nextCandidates)
+    }
+
+    // recordKnown('ab', 1)
+    function recordKnown(pattern, n) {
+        let encoded = encodeNumber(n) // 'cf'
+        // pick a
+        //      - mark it could be c or f;
+        // pick b.
+        //      - mark it could be c or f;
+        // for every other seg.
+        //      - mark it could NOT be c or f;    
+        for (let seg of SEGMENTS) {
+            if (pattern.includes(seg)) {
+                narrowPossibilities(seg, encoded.split(''))
+            } else {
+                excludePossibilities(seg, encoded.split(''))
+            }
+        }
+    }
+
     for (let pattern of patterns) {
-        if (pattern.length === 7) {
-            recordPattern(8, pattern)
+        if (pattern.length === 2) {
+            recordKnown(pattern, 1)
+        } else if (pattern.length === 3) {
+            recordKnown(pattern, 7)
+        } else if (pattern.length === 4) {
+            recordKnown(pattern, 4)
+        } else if (pattern.length === 7) {
+            recordKnown(pattern, 8)
         }
     }
+
+    function exclodeCandidates(pattern) {
+        let set = new Set()
+        let candidatesInOrder =
+            pattern.split('')
+                .map(char => candidateMap.get(char))
+        return explode(candidatesInOrder)
+    }
+
+    for (let pattern of patterns) {
+        console.group(pattern);
+        let originalCandidates = [...exclodeCandidates(pattern)]
+        console.log('exploded', originalCandidates);
+        console.groupEnd(pattern);
+        // let filteredCandidates = originalCandidates.filter(isValidCandidate)
+        // if (filteredCandidates.length === 1) {
+        //     console.log('tada', pattern, filteredCandidates[0]);
+        // }
+    }
+
+    // console.log(candidateMap);
     return segmentMap
 }
 
+function* explode(arrs) {
+    if (arrs.length === 1) {
+        yield* arrs[0]
+    } else {
+        let [head, ...tail] = arrs
+        for (let item of explode(tail)) {
+            for (let headItem of head) {
+                yield headItem + item
+            }
+        }
+    }
+}
 
-let mapping = inferMappings(
+let mapping = inferMapping(
     `acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab`
         .split(' ')
 )
-let output = 'cdfeb fcadb cdfeb cdbaf'.split(' ')
-let result = output.map(s => applyMappings(s, mapping))
+// console.log(mapping);
+// console.log(encodeNumber(5));
+// let output = 'cdfeb fcadb cdfeb cdbaf'.split(' ')
+// let result = output
+//     .map(s => applyMappings(s, mapping))
+// console.log(result);
 
 function applyMappings(segments, mapping) {
     segments = toCanonical(segments)
@@ -318,7 +397,7 @@ function toCanonical(segments) {
 
 // let sum = 0
 // for (let { patterns, output } of notes) {
-//     let mapping = guessMappings(patterns)
+//     let mapping = inferMapping(patterns)
 //     let decode = output
 //         .map(digit => applyMappings(digit, mapping))
 //         .map(decodeNumber)
@@ -326,4 +405,4 @@ function toCanonical(segments) {
 //     sum += decode
 // }
 
-console.log(sum);
+// alert(sum);
