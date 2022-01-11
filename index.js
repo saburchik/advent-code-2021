@@ -110,24 +110,25 @@ let COLS = arr[0].length
 
 function* getNeighbors(i, j) {
     if (i > 0) {
-        yield arr[i - 1][j]
+        yield [i - 1, j]
     }
     if (i < ROWS - 1) {
-        yield arr[i + 1][j]
+        yield [i + 1, j]
     }
     if (j > 0) {
-        yield arr[i][j - 1]
+        yield [i, j - 1]
     }
     if (j < COLS - 1) {
-        yield arr[i][j + 1]
+        yield [i, j + 1]
     }
-
-
 }
+
+let lowPoints = []
 
 function isLowPoint(i, j) {
     let value = arr[i][j]
-    for (let neighborValue of getNeighbors(i, j)) {
+    for (let [ni, nj] of getNeighbors(i, j)) {
+        let neighborValue = arr[ni][nj]
         if (value >= neighborValue) {
             return false
         }
@@ -139,13 +140,48 @@ for (let i = 0; i < arr.length; i++) {
     let line = arr[i]
     for (let j = 0; j < line.length; j++) {
         if (isLowPoint(i, j)) {
-            acc += line[j] + 1
+            lowPoints.push([i, j])
         }
     }
 }
 
-console.log(acc);
+function* getBasin(point, visited = new Set()) {
+    let [i, j] = point
+    for (let [ni, nj] of getNeighbors(i, j)) {
+        let nv = arr[ni][nj]
+        let v = arr[i][j]
+        if (visited.has(ni + '-' + nj)) {
+            continue;
+        }
+        visited.add(ni + '-' + nj)
+        if (nv >= v) {
+            yield* getBasin([ni, nj], visited)
+        }
+    }
+}
 
+let basins = lowPoints.map(p => [...getBasin(p)])
+
+console.log(basins);
+
+// x belongs to y's basin =
+// if you follow all trails downwards from x, the only
+// terminal stop is y
+// can a point belong to > 1 basin?
+// no, because belonging ti a basin = unique flow down
+// can a point belong to no basin at all?
+// yes, if by following a trail you reach different low points
+
+// x belongs to y's basin = ''
+
+// basins.sort((a, b) => b.length - a.length > 0 ? 1 : -1)
+// let result = (
+//     basins[0].length *
+//     basins[1].length *
+//     basins[2].length
+// )
+
+// console.log(result);
 
 
 
