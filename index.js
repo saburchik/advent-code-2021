@@ -146,22 +146,34 @@ for (let i = 0; i < arr.length; i++) {
 }
 
 function* getBasin(point, visited = new Set()) {
+
     let [i, j] = point
+    let v = arr[i, j]
+    let isGood = true
     for (let [ni, nj] of getNeighbors(i, j)) {
+
         let nv = arr[ni][nj]
-        let v = arr[i][j]
         if (visited.has(ni + '-' + nj)) {
             continue;
         }
         visited.add(ni + '-' + nj)
         if (nv >= v) {
+
             yield* getBasin([ni, nj], visited)
+        } else {
+            isGood = false
         }
+    }
+    if (isGood) {
+        yield point
     }
 }
 
+lowPoints = lowPoints[0]
+
 let basins = lowPoints.map(p => [...getBasin(p)])
 
+console.log(lowPoints);
 console.log(basins);
 
 // x belongs to y's basin =
