@@ -109,7 +109,7 @@ let rawInput = `{<<<[<(<{[[[[<<><>>({}())]<<[]{}>{<><>}>]]<({<[]{}>}<[[]{}]{[]<>
     [(<{{[{[{<([[[{}[]]<<>>]][[(()[])[(){}]]])({([<>[]]({}<>)){([]{})({}[])}}({(())({}[])}<{<>[]}(()[])>))
     ({[([(<{<(<<(([][])(()()))({[]()}(<>[]))><({{}()}[[]()])>>)>[<[([{()<>}<[]<>>]([{}<>]{()()}})<[<{}`
 
-function findFirstIllegalChar(line) {
+function calculateScore(line) {
     let stack = []
     for (let char of line) {
         switch (char) {
@@ -135,31 +135,50 @@ function findFirstIllegalChar(line) {
             case '>': {
                 let expected = stack.pop()
                 if (char !== expected) {
-                    if (expected === undefined) throw Error('oh..noo')
-                    return char
+                    return 0
                 }
             }
         }
     }
-    return null
-}
-
-function calculateScore(line) {
-    let char = findFirstIllegalChar(line)
-    switch (char) {
-        case ')': return 3
-        case ']': return 57
-        case '}': return 1197
-        case '>': return 25137
+    if (stack.length === 0) {
+        return 0
     }
-    return 0
+    let lineScore = 0
+    let char;
+    while ((char = stack.pop())) {
+        lineScore *= 5
+        switch (char) {
+            case ')': {
+                lineScore += 1
+                break
+            }
+            case ']': {
+                lineScore += 2
+                break
+            }
+            case '}': {
+                lineScore += 3
+                break
+            }
+            case '>': {
+                lineScore += 4
+                break
+            }
+        }
+    }
+    return lineScore
 }
 
 let lines = rawInput.split('\n')
 
-let score = 0
+let scores = []
 for (let line of lines) {
-    score += calculateScore(line)
+    let lineScore = calculateScore(line)
+    if (lineScore !== 0) {
+        scores.push(lineScore)
+    }
 }
 
-console.log(score);
+scores.sort((a, b) => a > b ? 1 : -1)
+
+console.log(scores[(scores.length - 1) / 2]);
