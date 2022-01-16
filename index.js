@@ -146,55 +146,30 @@ for (let i = 0; i < arr.length; i++) {
 }
 
 function* getBasin(point, visited = new Set()) {
-
     let [i, j] = point
-    let v = arr[i, j]
-    let isGood = true
+    visited.add(i + '-' + j)
+    yield point
     for (let [ni, nj] of getNeighbors(i, j)) {
-
-        let nv = arr[ni][nj]
         if (visited.has(ni + '-' + nj)) {
             continue;
         }
-        visited.add(ni + '-' + nj)
-        if (nv >= v) {
-
+        let nval = arr[ni][nj]
+        if (nval !== 9) [
             yield* getBasin([ni, nj], visited)
-        } else {
-            isGood = false
-        }
-    }
-    if (isGood) {
-        yield point
+        ]
     }
 }
 
-lowPoints = lowPoints[0]
-
 let basins = lowPoints.map(p => [...getBasin(p)])
 
-console.log(lowPoints);
-console.log(basins);
+basins.sort((a, b) => b.length - a.length > 0 ? 1 : -1)
+let result = (
+    basins[0].length *
+    basins[1].length *
+    basins[2].length
+)
 
-// x belongs to y's basin =
-// if you follow all trails downwards from x, the only
-// terminal stop is y
-// can a point belong to > 1 basin?
-// no, because belonging ti a basin = unique flow down
-// can a point belong to no basin at all?
-// yes, if by following a trail you reach different low points
-
-// x belongs to y's basin = ''
-
-// basins.sort((a, b) => b.length - a.length > 0 ? 1 : -1)
-// let result = (
-//     basins[0].length *
-//     basins[1].length *
-//     basins[2].length
-// )
-
-// console.log(result);
-
+console.log(); (result)
 
 
 
