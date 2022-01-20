@@ -66,10 +66,15 @@ function evolve() {
         grid[i][j] = 0
         flashes++
     }
+    if (flashedCoords.size === ROWS * COLS) {
+        return true
+    }
+    return false
 }
 
-for (let i = 0; i < 100; i++) {
-    evolve()
+for (let i = 0; i < 1000; i++) {
+    if (evolve()) {
+        alert(i + 1)
+        break
+    }
 }
-
-console.log(flashes);
