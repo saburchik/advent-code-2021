@@ -1,18 +1,19 @@
-let rawInput = `5483143223
-2745854711
-5264556173
-6141336146
-6357385478
-4167524645
-2176841721
-6882881134
-4846848554
-5283751526`
+let rawInput = `4836484555
+4663841772
+3512484556
+1481547572
+7741183422
+8683222882
+4215244233
+1544712171
+5725855786
+1717382281`
 
-let flashes = 0
 let grid = rawInput.split('\n').map(line => line
     .split('').map(Number))
 
+
+let flashes = 0
 let ROWS = grid.length
 let COLS = grid[0].length
 
@@ -37,37 +38,37 @@ function getNeighbors(i, j) {
 function evolve() {
     for (let i = 0; i < ROWS; i++) {
         for (let j = 0; j < COLS; j++) {
-            grid[i][j]
+            grid[i][j]++
         }
     }
     let flashedCoords = new Set()
-    let currentFlashes = 0
+    let needsMoreWork
     do {
-        flashes += currentFlashes
-        currentFlashes = 0
+        console.group('inner iteration start');
+        needsMoreWork = false
         for (let i = 0; i < ROWS; i++) {
             for (let j = 0; j < COLS; j++) {
                 if (flashedCoords.has(i + '-' + j)) {
                     continue
                 }
                 if (grid[i][j] > 9) {
-                    currentFlashes++
-                }
-                grid[i][j] = 0
-                flashedCoords.add(i + '-' + j)
-                for (let [ni, nj] of getNeighbors(i, j)) {
-                    grid[i][j]++
+                    needsMoreWork = true
+                    flashedCoords.add(i + '-' + j)
+                    for (let [ni, nj] of getNeighbors(i, j)) {
+                        grid[ni][nj]++
+                    }
                 }
             }
         }
-    } while (currentFlashes > 0)
+    } while (needsMoreWork)
     for (let coord of flashedCoords) {
         let [i, j] = coord.split('-').map(Number)
         grid[i][j] = 0
+        flashes++
     }
 }
 
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < 100; i++) {
     evolve()
 }
 
