@@ -1,80 +1,54 @@
-let rawInput = `4836484555
-4663841772
-3512484556
-1481547572
-7741183422
-8683222882
-4215244233
-1544712171
-5725855786
-1717382281`
+let rawInput = `start-A
+start-b
+A-c
+A-b
+b-d
+A-end
+b-end`
 
-let grid = rawInput.split('\n').map(line => line
-    .split('').map(Number))
+let pairs =
+    rawInput.split('\n')
+        .map(line => line.split('-'))
 
+let map = new Map()
 
-let flashes = 0
-let ROWS = grid.length
-let COLS = grid[0].length
-
-function getNeighbors(i, j) {
-    return [
-        [i - 1, j - 1],
-        [i - 1, j],
-        [i - 1, j + 1],
-        [i, j - 1],
-        [i, j + 1],
-        [i + 1, j - 1],
-        [i + 1, j],
-        [i + 1, j + 1],
-    ].filter(([ni, nj]) =>
-        ni >= 0 &&
-        nj >= 0 &&
-        ni <= ROWS - 1 &&
-        nj <= COLS - 1
-    )
+function recordConnection(from, to) {
+    if (!map.has(from)) {
+        map.set(from, new Set())
+    }
+    let set = map.get(from)
+    set.add(to)
+}
+for (let [a, b] of pairs) {
+    recordConnection(a, b)
+    recordConnection(b, a)
 }
 
-function evolve() {
-    for (let i = 0; i < ROWS; i++) {
-        for (let j = 0; j < COLS; j++) {
-            grid[i][j]++
+function isSmallCave(cave) {
+    return cave.toLowerCase() === cave[0]
+}
+
+function* walk(cave, visitedSmallCaves) {
+    if (cave === 'end') {
+        return []
+    }
+    if (isSmallCave(cave)) {
+        visitedSmallCaves.add(cave)
+    }
+    let connection = map.get(cave)
+    for (let nextCave of connection) {
+        if (
+            isSmallCave(nextCave) &&
+            visitedSmallCaves.has(nextCave)
+        ) {
+            continue
+        }
+        let nextPaths = walk(nextCave, visitedSmallCaves)
+        for (let nextPath of nextPaths) {
+            yield [nextCave, ...nextPath]
         }
     }
-    let flashedCoords = new Set()
-    let needsMoreWork
-    do {
-        console.group('inner iteration start');
-        needsMoreWork = false
-        for (let i = 0; i < ROWS; i++) {
-            for (let j = 0; j < COLS; j++) {
-                if (flashedCoords.has(i + '-' + j)) {
-                    continue
-                }
-                if (grid[i][j] > 9) {
-                    needsMoreWork = true
-                    flashedCoords.add(i + '-' + j)
-                    for (let [ni, nj] of getNeighbors(i, j)) {
-                        grid[ni][nj]++
-                    }
-                }
-            }
-        }
-    } while (needsMoreWork)
-    for (let coord of flashedCoords) {
-        let [i, j] = coord.split('-').map(Number)
-        grid[i][j] = 0
-        flashes++
-    }
-    if (flashedCoords.size === ROWS * COLS) {
-        return true
-    }
-    return false
 }
 
-for (let i = 0; i < 1000; i++) {
-    if (evolve()) {
-        alert(i + 1)
-        break
-    }
-}
+let paths = [...walk('start', new Set())]
+console.log(paths);
