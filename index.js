@@ -46,22 +46,34 @@ function isSmallCave(cave) {
     return cave.toLowerCase() === cave
 }
 
-function* walk(cave, visitedSmallCaves) {
+function* walk(cave, state) {
     if (cave === 'end') {
         yield [cave]
     } else {
         if (isSmallCave(cave)) {
-            visitedSmallCaves.add(cave)
+            state.visitedSmallCaves.add(cave)
         }
         let connections = map.get(cave)
         for (let nextCave of connections) {
-            if (
-                isSmallCave(nextCave) &&
-                visitedSmallCaves.has(nextCave)
-            ) {
-                continue
+            let nextState = {
+                visitedSmallCaves: new Set([...state.visitedSmallCaves]),
+                extraVisitCave: state.extraVisitCave
             }
-            let nextPaths = walk(nextCave, new Set([...visitedSmallCaves]))
+            if (isSmallCave(nextCave) &&
+                state.visitedSmallCaves.has(nextCave)) {
+                if (
+                    nextCave === 'start' ||
+                    nextCave === 'end'
+                ) {
+                    continue
+                }
+                if (state.extraVisitCave === null) {
+                    nextState.extraVisitCave = nextCave
+                } else {
+                    continue
+                }
+            }
+            let nextPaths = walk(nextCave, nextState)
             for (let nextPath of nextPaths) {
                 yield [cave, ...nextPath]
             }
@@ -69,5 +81,8 @@ function* walk(cave, visitedSmallCaves) {
     }
 }
 
-let paths = [...walk('start', new Set())]
-console.log(paths);
+let paths = [...walk('start', {
+    visitedSmallCaves: new Set(),
+    extraVisitCave: null
+})]
+console.log(paths); 
