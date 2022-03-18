@@ -864,10 +864,12 @@ instructions = instructions.split('\n').map(instr => {
 })
 
 console.log(printGrid(points))
-points = applyTransfrom(points, instructions[0])
-console.log('after transform:')
-console.log(printGrid(points))
-console.log(countVisiblePoints(points))
+for (let instruction of instructions) {
+    points = applyTransfrom(points, instruction)
+    console.log('after transform:')
+    console.log(printGrid(points))
+}
+
 
 function countVisiblePoints(points) {
     return new Set(
